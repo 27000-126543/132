@@ -134,7 +134,7 @@ router.get('/', authenticate, async (
           gate: true,
           crewAssignments: {
             include: {
-              crewMember: true,
+              crew: true,
             },
           },
           baggageItems: {
@@ -175,7 +175,7 @@ router.get('/:flightId', authenticate, async (
         gate: true,
         crewAssignments: {
           include: {
-            crewMember: true,
+            crew: true,
           },
         },
         baggageSlot: true,

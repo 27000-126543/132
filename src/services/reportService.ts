@@ -369,7 +369,7 @@ export const getOnTimePerformance = async (
 
   const flights = await prisma.flight.findMany({
     where,
-    include: { airline: true },
+    include: { airlineRelation: true },
   });
 
   const total = flights.length;
@@ -420,7 +420,7 @@ export const getStandTurnoverAnalysis = async (
       startTime: { gte: startDate, lte: endDate },
       isActive: true,
     },
-    include: { stand: true, flight: { include: { airline: true } } },
+    include: { stand: true, flight: { include: { airlineRelation: true } } },
   });
 
   const standStats = new Map<number, {
@@ -493,7 +493,7 @@ export const getBaggagePerformance = async (
   const baggageItems = await prisma.baggageItem.findMany({
     where,
     include: {
-      flight: { include: { airline: true } },
+      flight: { include: { airlineRelation: true } },
       scans: true,
     },
   });
@@ -563,7 +563,7 @@ export const getDelayAnalysis = async (
 
   const delayedFlights = await prisma.flight.findMany({
     where,
-    include: { airline: true },
+    include: { airlineRelation: true },
   });
 
   const reasonStats = await prisma.flight.groupBy({

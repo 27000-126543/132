@@ -138,7 +138,7 @@ export const createCateringOrder = async (data: {
     include: {
       vehicle: true,
       flight: {
-        include: { airline: true, stand: true },
+        include: { airlineRelation: true, stand: true },
       },
     },
   });
@@ -280,7 +280,7 @@ export const reassignCateringVehicle = async (orderId: number) => {
     where: { id: orderId },
     include: {
       vehicle: true,
-      flight: { include: { stand: true, airline: true } },
+      flight: { include: { stand: true, airlineRelation: true } },
     },
   });
 
@@ -441,7 +441,7 @@ export const getCateringOrderDetails = async (orderId: number) => {
     include: {
       vehicle: true,
       flight: {
-        include: { airline: true, stand: true, gate: true },
+        include: { airlineRelation: true, stand: true, gate: true },
       },
       deliveries: {
         orderBy: { timestamp: 'asc' },
@@ -480,7 +480,7 @@ export const getVehicleStatus = async (vehicleId: number) => {
         where: {
           status: { in: [CateringStatus.PENDING, CateringStatus.IN_TRANSIT, CateringStatus.TEMPERATURE_ALERT] },
         },
-        include: { flight: { include: { airline: true } } },
+        include: { flight: { include: { airlineRelation: true } } },
       },
       temperatureLogs: {
         orderBy: { timestamp: 'desc' },
@@ -518,7 +518,7 @@ export const getActiveOrders = async (page: number = 1, pageSize: number = 20) =
       },
       include: {
         vehicle: true,
-        flight: { include: { airline: true, stand: true } },
+        flight: { include: { airlineRelation: true, stand: true } },
         deliveries: {
           orderBy: { timestamp: 'desc' },
           take: 1,

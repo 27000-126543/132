@@ -4,7 +4,7 @@ import { generateDailyReport } from './reportService';
 import { monitorBaggageDelays } from './baggageService';
 import { monitorTemperatures } from './cateringService';
 import { autoAdjustCrew } from './crewService';
-import config from '../config';
+import { config } from '../config';
 
 export const initScheduler = () => {
   console.log('📅 初始化定时任务调度器...');

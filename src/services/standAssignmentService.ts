@@ -190,7 +190,7 @@ export const assignOptimalStand = async (
     where: { id: flightId },
     include: {
       stand: true,
-      airline: true,
+      airlineRelation: true,
     },
   });
 
@@ -405,7 +405,7 @@ export const getStandAssignments = async (
       include: {
         flight: {
           include: {
-            airline: { select: { name: true, iataCode: true } },
+            airlineRelation: { select: { name: true, iataCode: true } },
           },
         },
         stand: true,
@@ -443,7 +443,7 @@ export const getStandSchedule = async (standId: number, date: Date) => {
         },
         include: {
           flight: {
-            include: { airline: { select: { name: true } } },
+            include: { airlineRelation: { select: { name: true } } },
           },
         },
         orderBy: { startTime: 'asc' },

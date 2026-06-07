@@ -31,7 +31,7 @@ export const generateResourcePlan = async (
 ): Promise<ResourcePlan> => {
   const flight = await prisma.flight.findUnique({
     where: { id: flightId },
-    include: { airline: true },
+    include: { airlineRelation: true },
   });
 
   if (!flight) {
@@ -86,7 +86,7 @@ export const createResourceRequest = async (
 ) => {
   const flight = await prisma.flight.findUnique({
     where: { id: flightId },
-    include: { airline: true },
+    include: { airlineRelation: true },
   });
 
   if (!flight) {
@@ -133,7 +133,7 @@ export const createResourceRequest = async (
     },
     include: {
       flight: {
-        include: { airline: true, stand: true, gate: true },
+        include: { airlineRelation: true, stand: true, gate: true },
       },
       requester: {
         select: { id: true, username: true, department: true },
@@ -161,7 +161,7 @@ export const approveResourceRequest = async (
   const request = await prisma.resourceAllocationRequest.findUnique({
     where: { id: requestId },
     include: {
-      flight: { include: { airline: true } },
+      flight: { include: { airlineRelation: true } },
       requester: true,
     },
   });
@@ -207,7 +207,7 @@ export const approveResourceRequest = async (
       estimatedCost: finalCost,
     },
     include: {
-      flight: { include: { airline: true } },
+      flight: { include: { airlineRelation: true } },
       approver: { select: { id: true, username: true, department: true } },
     },
   });
@@ -311,7 +311,7 @@ export const getPendingRequests = async (
       where,
       include: {
         flight: {
-          include: { airline: true, stand: true, gate: true },
+          include: { airlineRelation: true, stand: true, gate: true },
         },
         requester: {
           select: { id: true, username: true, department: true },
@@ -354,7 +354,7 @@ export const getRequestHistory = async (
     prisma.resourceAllocationRequest.findMany({
       where,
       include: {
-        flight: { include: { airline: true } },
+        flight: { include: { airlineRelation: true } },
         requester: { select: { id: true, username: true, department: true } },
         approver: { select: { id: true, username: true, department: true } },
       },
@@ -396,7 +396,7 @@ export const getResourceUtilization = async (date: Date) => {
       executedAt: { gte: startOfDay, lte: endOfDay },
     },
     include: {
-      flight: { include: { airline: true } },
+      flight: { include: { airlineRelation: true } },
     },
   });
 

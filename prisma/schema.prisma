@@ -100,8 +100,10 @@ enum StandType {
 }
 
 enum BridgeType {
+  NONE
   SINGLE
   DUAL
+  TRIPLE
   WIDE_BODY
   NARROW_BODY
 }
@@ -256,15 +258,15 @@ model Flight {
 model Stand {
   id              Int        @id @default(autoincrement())
   standNumber     String     @unique
-  code            String     @unique
-  type            StandType
+  standType       StandType
   terminal        String
-  area            String
-  maxAircraftSize AircraftType
+  area            String?
+  maxAircraftSize AircraftType?
   maxAircraftType String
   hasBridge       Boolean    @default(true)
   bridgeType      BridgeType?
   isAvailable     Boolean    @default(true)
+  isActive        Boolean    @default(true)
   currentStatus   String     @default("AVAILABLE")
   maintenanceDate DateTime?
   notes           String?
@@ -309,12 +311,14 @@ model StandAssignment {
 
 model Gate {
   id              Int      @id @default(autoincrement())
-  code            String   @unique
-  type            GateType
+  gateNumber      String   @unique
+  gateType        GateType
   terminal        String
-  area            String
+  area            String?
   maxCapacity     Int
   isAvailable     Boolean  @default(true)
+  isActive        Boolean  @default(true)
+  currentStatus   String   @default("AVAILABLE")
   xCoordinate     Int
   yCoordinate     Int
   createdAt       DateTime @default(now())
@@ -367,9 +371,11 @@ model BaggageItem {
 
 model BaggageSlot {
   id          Int      @id @default(autoincrement())
-  code        String   @unique
+  slotCode    String   @unique
   terminal    String
   carouselNumber Int
+  status      BaggageSlotStatus @default(AVAILABLE)
+  maxBags     Int      @default(150)
   isActive    Boolean  @default(true)
   currentFlightId Int?
   flightAssignedAt DateTime?
@@ -390,20 +396,21 @@ model BaggageScan {
 }
 
 model CateringVehicle {
-  id              Int      @id @default(autoincrement())
-  plateNumber     String   @unique
+  id              Int                  @id @default(autoincrement())
+  plateNumber     String               @unique
   vehicleType     String
   capacity        Int
   currentTemp     Float
   minTemp         Float
   maxTemp         Float
-  isAvailable     Boolean  @default(true)
+  status          CateringVehicleStatus @default(AVAILABLE)
+  isAvailable     Boolean              @default(true)
   lastMaintenance DateTime?
   currentLocation String
-  xCoordinate     Int
-  yCoordinate     Int
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  xCoordinate     Int?
+  yCoordinate     Int?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
   orders          CateringOrder[]
   temperatureLogs TemperatureLog[]
 }
@@ -451,20 +458,23 @@ model TemperatureLog {
 }
 
 model CrewMember {
-  id               Int        @id @default(autoincrement())
-  employeeId       String     @unique
+  id               Int          @id @default(autoincrement())
+  employeeId       String       @unique
   name             String
   role             CrewRole
+  status           CrewStatus   @default(AVAILABLE)
   qualifications   String[]
   baseAirport      String
   contactPhone     String
   contactEmail     String
   lastFlightEnd    DateTime?
-  restHours        Float      @default(0)
-  flightHoursToday Float      @default(0)
-  isAvailable      Boolean    @default(true)
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  restHours        Float        @default(0)
+  flightHoursToday Float        @default(0)
+  isAvailable      Boolean      @default(true)
+  totalFlightHours Int          @default(0)
+  dateOfHire       DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
   assignments      CrewAssignment[]
   restPeriods      CrewRestPeriod[]
 }
@@ -520,20 +530,23 @@ model ResourceAllocationRequest {
 }
 
 model Notification {
-  id          Int                @id @default(autoincrement())
-  type        NotificationType
-  target      NotificationTarget
-  flightId    Int?
-  flight      Flight?            @relation(fields: [flightId], references: [id])
-  userId      Int?
-  user        User?              @relation(fields: [userId], references: [id])
-  title       String
-  message     String
-  dataJson    String?
-  isRead      Boolean            @default(false)
-  readAt      DateTime?
-  sentViaWs   Boolean            @default(false)
-  createdAt   DateTime           @default(now())
+  id              Int                @id @default(autoincrement())
+  type            NotificationType
+  target          NotificationTarget
+  recipientTypes  String             @default("")
+  flightId        Int?
+  flight          Flight?            @relation(fields: [flightId], references: [id])
+  userId          Int?
+  user            User?              @relation(fields: [userId], references: [id])
+  title           String
+  message         String
+  content         String?
+  dataJson        String?
+  metadata        String?
+  isRead          Boolean            @default(false)
+  readAt          DateTime?
+  sentViaWs       Boolean            @default(false)
+  createdAt       DateTime           @default(now())
 }
 
 model DailyReport {
@@ -562,4 +575,18 @@ model ShuttleBus {
   driverPhone   String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model Resource {
+  id           Int          @id @default(autoincrement())
+  resourceType ResourceType
+  resourceCode String       @unique
+  name         String
+  location     String
+  status       String       @default("AVAILABLE")
+  capacity     Int          @default(1)
+  priority     Priority     @default(NORMAL)
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 }

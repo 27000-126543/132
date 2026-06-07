@@ -145,7 +145,7 @@ export const createBaggageItem = async (data: {
     include: {
       slot: true,
       flight: {
-        include: { airline: true },
+        include: { airlineRelation: true },
       },
     },
   });
@@ -357,7 +357,7 @@ export const monitorBaggageDelays = async () => {
     },
     include: {
       flight: {
-        include: { airline: true },
+        include: { airlineRelation: true },
       },
     },
   });
@@ -403,7 +403,7 @@ export const getBaggageByTag = async (bagTagNumber: string) => {
     where: { bagTagNumber },
     include: {
       flight: {
-        include: { airline: true, stand: true, gate: true },
+        include: { airlineRelation: true, stand: true, gate: true },
       },
       slot: true,
       scans: {

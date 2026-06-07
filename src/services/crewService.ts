@@ -554,7 +554,7 @@ export const getCrewSchedule = async (crewId: number, startDate: Date, endDate: 
         },
         include: {
           flight: {
-            include: { airline: true, stand: true, gate: true },
+            include: { airlineRelation: true, stand: true, gate: true },
           },
         },
         orderBy: { flight: { scheduledDeparture: 'asc' } },

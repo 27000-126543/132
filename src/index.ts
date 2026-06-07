@@ -6,7 +6,7 @@ import morgan from 'morgan';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import config from './config';
+import { config } from './config';
 import { errorHandler, AppError } from './middleware/errorHandler';
 import { initWebSocket } from './services/notificationService';
 import { initScheduler } from './services/schedulerService';
