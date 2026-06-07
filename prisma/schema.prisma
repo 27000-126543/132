@@ -1,0 +1,565 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum FlightStatus {
+  SCHEDULED
+  DELAYED
+  BOARDING
+  DEPARTED
+  ARRIVED
+  CANCELLED
+  IN_FLIGHT
+}
+
+enum FlightDirection {
+  DEPARTURE
+  ARRIVAL
+}
+
+enum UserRole {
+  ADMIN
+  SUPERVISOR
+  USER
+}
+
+enum Department {
+  IT
+  OPERATIONS
+  GROUND_SERVICE
+  TOWER
+  BAGGAGE
+  CATERING
+  CREW_SCHEDULING
+  AIRLINE_OPS
+  MAINTENANCE
+  SECURITY
+}
+
+enum RecipientType {
+  GROUND_SERVICE
+  TOWER
+  AIRLINE_OPS
+  MAINTENANCE
+  CATERING
+  CREW
+  SECURITY
+  ALL
+}
+
+enum CrewStatus {
+  AVAILABLE
+  ON_DUTY
+  RESTING
+  ON_LEAVE
+  UNAVAILABLE
+}
+
+enum BaggageSlotStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+  OUT_OF_SERVICE
+}
+
+enum CateringVehicleStatus {
+  AVAILABLE
+  IN_TRANSIT
+  LOADING
+  UNLOADING
+  MAINTENANCE
+  OUT_OF_SERVICE
+}
+
+enum ResourceType {
+  CHECKIN_COUNTER
+  CLEANING_CREW
+  SHUTTLE_BUS
+  BAGGAGE_CART
+  PASSENGER_ASSIST
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum StandType {
+  REMOTE
+  CONTACT
+  WIDE_BODY
+  NARROW_BODY
+  CARGO
+}
+
+enum BridgeType {
+  SINGLE
+  DUAL
+  WIDE_BODY
+  NARROW_BODY
+}
+
+enum AircraftType {
+  B737
+  B747
+  B777
+  B787
+  A320
+  A330
+  A350
+  A380
+}
+
+enum BaggageStatus {
+  WAITING
+  IN_TRANSIT
+  ARRIVED
+  DELAYED
+  LOST
+  DELIVERED
+}
+
+enum GateType {
+  DOMESTIC
+  INTERNATIONAL
+  MIXED
+}
+
+enum CateringStatus {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+  TEMPERATURE_ALERT
+}
+
+enum CrewRole {
+  CAPTAIN
+  FIRST_OFFICER
+  PURSER
+  FLIGHT_ATTENDANT
+  ENGINEER
+}
+
+enum NotificationType {
+  STAND_CHANGE
+  GATE_CHANGE
+  FLIGHT_DELAY
+  BAGGAGE_ALERT
+  CREW_ASSIGNMENT
+  CATERING_ALERT
+  RESOURCE_ALLOCATION
+}
+
+enum NotificationTarget {
+  GROUND_SERVICE
+  TOWER
+  AIRLINE_OPS
+  MAINTENANCE
+  CATERING
+  CREW
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXECUTED
+}
+
+enum DelayReason {
+  WEATHER
+  MECHANICAL
+  CREW_SHORTAGE
+  PASSENGER
+  AIR_TRAFFIC_CONTROL
+  CATERING
+  BAGGAGE
+  SECURITY
+  OTHER
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  fullName     String?
+  phone        String?
+  role         UserRole @default(USER)
+  department   Department?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  notifications Notification[]
+  requestedResources ResourceAllocationRequest[] @relation("Requester")
+  approvedResources ResourceAllocationRequest[] @relation("Approver")
+}
+
+model Airline {
+  id           Int      @id @default(autoincrement())
+  name         String
+  code         String   @unique
+  iataCode     String
+  contactEmail String
+  contactPhone String
+  createdAt    DateTime @default(now())
+  flights      Flight[] @relation("FlightAirline")
+}
+
+model Flight {
+  id              Int           @id @default(autoincrement())
+  flightNumber    String
+  airline         String
+  airlineId       Int?
+  airlineRelation Airline?      @relation("FlightAirline", fields: [airlineId], references: [id])
+  aircraftType    AircraftType
+  aircraftReg     String?
+  direction       FlightDirection?
+  origin          String
+  destination     String
+  scheduledArrival DateTime
+  scheduledDeparture DateTime
+  actualArrival   DateTime?
+  actualDeparture DateTime?
+  status          FlightStatus  @default(SCHEDULED)
+  passengerCount  Int
+  isInternational Boolean       @default(false)
+  hasSpecialNeeds Boolean       @default(false)
+  specialNotes    String?
+  delayReason     DelayReason?
+  delayMinutes    Int           @default(0)
+  standId         Int?
+  stand           Stand?        @relation(fields: [standId], references: [id])
+  gateId          Int?
+  gate            Gate?         @relation(fields: [gateId], references: [id])
+  dailyReportId   Int?
+  dailyReport     DailyReport?  @relation(fields: [dailyReportId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  standAssignments StandAssignment[]
+  gateChanges     GateChange[]
+  baggageItems    BaggageItem[]
+  cateringOrders  CateringOrder[]
+  crewAssignments CrewAssignment[]
+  resourceRequests ResourceAllocationRequest[]
+  notifications   Notification[]
+}
+
+model Stand {
+  id              Int        @id @default(autoincrement())
+  standNumber     String     @unique
+  code            String     @unique
+  type            StandType
+  terminal        String
+  area            String
+  maxAircraftSize AircraftType
+  maxAircraftType String
+  hasBridge       Boolean    @default(true)
+  bridgeType      BridgeType?
+  isAvailable     Boolean    @default(true)
+  currentStatus   String     @default("AVAILABLE")
+  maintenanceDate DateTime?
+  notes           String?
+  xCoordinate     Float
+  yCoordinate     Float
+  distanceToBaggage Int
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  flights         Flight[]
+  assignments     StandAssignment[]
+  incompatibleAircrafts StandAircraftCompatibility[]
+}
+
+model StandAircraftCompatibility {
+  id          Int          @id @default(autoincrement())
+  standId     Int
+  stand       Stand        @relation(fields: [standId], references: [id])
+  aircraftType AircraftType
+  reason      String
+  createdAt   DateTime     @default(now())
+  @@unique([standId, aircraftType])
+}
+
+model StandAssignment {
+  id          Int      @id @default(autoincrement())
+  flightId    Int
+  flight      Flight   @relation(fields: [flightId], references: [id])
+  standId     Int
+  stand       Stand    @relation(fields: [standId], references: [id])
+  assignedAt  DateTime @default(now())
+  startTime   DateTime
+  endTime     DateTime
+  isActive    Boolean  @default(true)
+  isConflict  Boolean  @default(false)
+  conflictDetails String?
+  alternativeStandId Int?
+  notified    Boolean  @default(false)
+  notifiedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Gate {
+  id              Int      @id @default(autoincrement())
+  code            String   @unique
+  type            GateType
+  terminal        String
+  area            String
+  maxCapacity     Int
+  isAvailable     Boolean  @default(true)
+  xCoordinate     Int
+  yCoordinate     Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  flights         Flight[]
+  oldGateChanges  GateChange[] @relation("OldGate")
+  newGateChanges  GateChange[] @relation("NewGate")
+}
+
+model GateChange {
+  id                  Int      @id @default(autoincrement())
+  flightId            Int
+  flight              Flight   @relation(fields: [flightId], references: [id])
+  oldGateId           Int
+  oldGate             Gate     @relation("OldGate", fields: [oldGateId], references: [id])
+  newGateId           Int
+  newGate             Gate     @relation("NewGate", fields: [newGateId], references: [id])
+  walkingTimeMinutes  Int
+  needsShuttle        Boolean  @default(false)
+  shuttleDispatched   Boolean  @default(false)
+  shuttleId           Int?
+  changeReason        String?
+  notifiedPassengers  Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model BaggageItem {
+  id              Int           @id @default(autoincrement())
+  flightId        Int
+  flight          Flight        @relation(fields: [flightId], references: [id])
+  bagTagNumber    String        @unique
+  passengerName   String
+  origin          String
+  destination     String
+  isTransfer      Boolean       @default(false)
+  transferFlightId Int?
+  slotId          Int?
+  slot            BaggageSlot?  @relation(fields: [slotId], references: [id])
+  status          BaggageStatus @default(WAITING)
+  arrivalScanTime DateTime?
+  deliveryTime    DateTime?
+  expectedTime    DateTime
+  delayMinutes    Int           @default(0)
+  isAlertSent     Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  scans           BaggageScan[]
+}
+
+model BaggageSlot {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique
+  terminal    String
+  carouselNumber Int
+  isActive    Boolean  @default(true)
+  currentFlightId Int?
+  flightAssignedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  baggageItems BaggageItem[]
+}
+
+model BaggageScan {
+  id            Int      @id @default(autoincrement())
+  baggageId     Int
+  baggage       BaggageItem @relation(fields: [baggageId], references: [id])
+  scanPoint     String
+  scanTime      DateTime @default(now())
+  location      String
+  scanResult    String
+  createdAt     DateTime @default(now())
+}
+
+model CateringVehicle {
+  id              Int      @id @default(autoincrement())
+  plateNumber     String   @unique
+  vehicleType     String
+  capacity        Int
+  currentTemp     Float
+  minTemp         Float
+  maxTemp         Float
+  isAvailable     Boolean  @default(true)
+  lastMaintenance DateTime?
+  currentLocation String
+  xCoordinate     Int
+  yCoordinate     Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  orders          CateringOrder[]
+  temperatureLogs TemperatureLog[]
+}
+
+model CateringOrder {
+  id                Int           @id @default(autoincrement())
+  flightId          Int
+  flight            Flight        @relation(fields: [flightId], references: [id])
+  vehicleId         Int?
+  vehicle           CateringVehicle? @relation(fields: [vehicleId], references: [id])
+  mealCount         Int
+  specialMeals      Int           @default(0)
+  pickupLocation    String
+  pickupX           Int
+  pickupY           Int
+  deliveryStartTime DateTime
+  estimatedDuration Int
+  status            CateringStatus @default(PENDING)
+  routeJson         String?
+  temperatureAlert  Boolean       @default(false)
+  reassignAttempts  Int           @default(0)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  deliveries        CateringDelivery[]
+}
+
+model CateringDelivery {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     CateringOrder @relation(fields: [orderId], references: [id])
+  checkpoint String
+  timestamp DateTime @default(now())
+  temp      Float
+  status    String
+  notes     String?
+}
+
+model TemperatureLog {
+  id        Int      @id @default(autoincrement())
+  vehicleId Int
+  vehicle   CateringVehicle @relation(fields: [vehicleId], references: [id])
+  temp      Float
+  timestamp DateTime @default(now())
+  isAlert   Boolean  @default(false)
+}
+
+model CrewMember {
+  id               Int        @id @default(autoincrement())
+  employeeId       String     @unique
+  name             String
+  role             CrewRole
+  qualifications   String[]
+  baseAirport      String
+  contactPhone     String
+  contactEmail     String
+  lastFlightEnd    DateTime?
+  restHours        Float      @default(0)
+  flightHoursToday Float      @default(0)
+  isAvailable      Boolean    @default(true)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  assignments      CrewAssignment[]
+  restPeriods      CrewRestPeriod[]
+}
+
+model CrewRestPeriod {
+  id          Int      @id @default(autoincrement())
+  crewId      Int
+  crew        CrewMember @relation(fields: [crewId], references: [id])
+  startTime   DateTime
+  endTime     DateTime
+  duration    Float
+  isValid     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model CrewAssignment {
+  id            Int      @id @default(autoincrement())
+  flightId      Int
+  flight        Flight   @relation(fields: [flightId], references: [id])
+  crewId        Int
+  crew          CrewMember @relation(fields: [crewId], references: [id])
+  role          CrewRole
+  assignedAt    DateTime @default(now())
+  isConfirmed   Boolean  @default(false)
+  hasConflict   Boolean  @default(false)
+  conflictDetails String?
+  alternativeCrewId Int?
+  notified      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ResourceAllocationRequest {
+  id                Int      @id @default(autoincrement())
+  flightId          Int
+  flight            Flight   @relation(fields: [flightId], references: [id])
+  delayReason       DelayReason
+  additionalCounters Int     @default(0)
+  additionalCleaners Int    @default(0)
+  additionalStaff   Int      @default(0)
+  estimatedCost     Float
+  justification     String
+  requesterId       Int
+  requester         User     @relation("Requester", fields: [requesterId], references: [id])
+  approverId        Int?
+  approver          User?    @relation("Approver", fields: [approverId], references: [id])
+  approvalStatus    ApprovalStatus @default(PENDING)
+  approvedAt        DateTime?
+  executedAt        DateTime?
+  rejectionReason   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Notification {
+  id          Int                @id @default(autoincrement())
+  type        NotificationType
+  target      NotificationTarget
+  flightId    Int?
+  flight      Flight?            @relation(fields: [flightId], references: [id])
+  userId      Int?
+  user        User?              @relation(fields: [userId], references: [id])
+  title       String
+  message     String
+  dataJson    String?
+  isRead      Boolean            @default(false)
+  readAt      DateTime?
+  sentViaWs   Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+}
+
+model DailyReport {
+  id                Int      @id @default(autoincrement())
+  reportDate        DateTime @unique
+  totalFlights      Int
+  onTimeFlights     Int
+  onTimeRate        Float
+  totalStandTurns   Int
+  standTurnoverRate Float
+  totalBaggage      Int
+  lostBaggage       Int
+  baggageErrorRate  Float
+  delayMinutes      Int
+  generatedAt       DateTime @default(now())
+  flights           Flight[]
+}
+
+model ShuttleBus {
+  id            Int      @id @default(autoincrement())
+  plateNumber   String   @unique
+  capacity      Int
+  isAvailable   Boolean  @default(true)
+  currentLocation String
+  driverName    String?
+  driverPhone   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
